@@ -1,4 +1,4 @@
 # master_plan
 
-A new Flutter project.
-![Screenshot master_plan](images/01.png)
+Tugas Praktikum Master Plan
+![Screenshot master_plan](assets/01.png)
