@@ -3,14 +3,17 @@ import '../models/data_layer.dart';
 import '../provider/plan_provider.dart';
 
 class PlanScreen extends StatefulWidget {
-  const PlanScreen({super.key});
+  final Plan plan;
+  const PlanScreen({super.key, required this.plan});
 
   @override
   State createState() => _PlanScreenState();
 }
 
 class _PlanScreenState extends State<PlanScreen> {
+
   late ScrollController scrollController;
+  Plan get plan => widget.plan;
 
   @override
   void initState() {
@@ -23,50 +26,20 @@ class _PlanScreenState extends State<PlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Master Plan Davina')),
-      body: ValueListenableBuilder<Plan>(
-        valueListenable: PlanProvider.of(context),
-        builder: (context, plan, child) {
-          double progress = plan.tasks.isEmpty ? 0 : plan.completedCount / plan.tasks.length;
+    ValueNotifier<List<Plan>> plansNotifier = PlanProvider.of(context);
 
+    return Scaffold(
+      appBar: AppBar(title: Text(plan.name)),
+      body: ValueListenableBuilder<List<Plan>>(
+        valueListenable: plansNotifier,
+        builder: (context, plans, child) {
+          Plan currentPlan = plans.firstWhere((p) => p.name == plan.name);
           return Column(
             children: [
-              Expanded(child: _buildList(plan)),
-
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Text(plan.completenessMessage),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.grey[300],
-                      color: Colors.purple,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+              Expanded(child: _buildList(currentPlan)),
+              SafeArea(child: Text(currentPlan.completenessMessage)),
+            ],);},),
       floatingActionButton: _buildAddTaskButton(context),
-    );
-  }
-
-  Widget _buildAddTaskButton(BuildContext context) {
-    ValueNotifier<Plan> planNotifier = PlanProvider.of(context); // ✅ Ambil ValueNotifier dari PlanProvider
-    return FloatingActionButton(
-      child: const Icon(Icons.add),
-      onPressed: () {
-        Plan currentPlan = planNotifier.value;
-        planNotifier.value = Plan(
-          name: currentPlan.name,
-          tasks: List<Task>.from(currentPlan.tasks)..add(const Task()),
-        );
-      },
     );
   }
 
@@ -74,41 +47,83 @@ class _PlanScreenState extends State<PlanScreen> {
     return ListView.builder(
       controller: scrollController,
       itemCount: plan.tasks.length,
-      itemBuilder: (context, index) => _buildTaskTile(plan.tasks[index], index, context),
+      itemBuilder: (context, index) =>
+          _buildTaskTile(plan.tasks[index], index, context),
     );
   }
 
   Widget _buildTaskTile(Task task, int index, BuildContext context) {
-    ValueNotifier<Plan> planNotifier = PlanProvider.of(context); // ✅ Ambil data dari PlanProvider
+    ValueNotifier<List<Plan>> planNotifier = PlanProvider.of(context);
+
     return ListTile(
       leading: Checkbox(
         value: task.complete,
         onChanged: (selected) {
-          Plan currentPlan = planNotifier.value;
-          planNotifier.value = Plan(
-            name: currentPlan.name,
-            tasks: List<Task>.from(currentPlan.tasks)
-              ..[index] = Task(
-                description: task.description,
-                complete: selected ?? false,
-              ),
+          int planIndex = planNotifier.value.indexWhere((p) => p.name == plan.name);
+          Plan currentPlan = planNotifier.value[planIndex];
+
+          Task updatedTask = Task(
+            description: task.description,
+            complete: selected ?? false,
           );
+          
+          List<Task> updatedTasks = List<Task>.from(currentPlan.tasks);
+          updatedTasks[index] = updatedTask;
+          
+          planNotifier.value = List<Plan>.from(planNotifier.value)
+            ..[planIndex] = Plan(
+              name: currentPlan.name,
+              tasks: updatedTasks,
+            );
+          
+          setState(() {});
         },
       ),
       title: TextFormField(
         initialValue: task.description,
+        style: const TextStyle(fontSize: 16),
         onChanged: (text) {
-          Plan currentPlan = planNotifier.value;
-          planNotifier.value = Plan(
-            name: currentPlan.name,
-            tasks: List<Task>.from(currentPlan.tasks)
-              ..[index] = Task(
-                description: text,
-                complete: task.complete,
-              ),
+          int planIndex = planNotifier.value.indexWhere((p) => p.name == plan.name);
+          Plan currentPlan = planNotifier.value[planIndex];
+          
+          Task updatedTask = Task(
+            description: text,
+            complete: task.complete,
           );
+          
+          List<Task> updatedTasks = List<Task>.from(currentPlan.tasks);
+          updatedTasks[index] = updatedTask;
+          
+          planNotifier.value = List<Plan>.from(planNotifier.value)
+            ..[planIndex] = Plan(
+              name: currentPlan.name,
+              tasks: updatedTasks,
+            );
         },
       ),
+    );
+  }
+
+  Widget _buildAddTaskButton(BuildContext context) {
+    ValueNotifier<List<Plan>> planNotifier = PlanProvider.of(context);
+    return FloatingActionButton(
+      child: const Icon(Icons.add),
+      onPressed: () {
+
+        int planIndex = planNotifier.value.indexWhere((p) => p.name == plan.name);
+        Plan currentPlan = planNotifier.value[planIndex];
+        
+        List<Task> updatedTasks = List<Task>.from(currentPlan.tasks)
+          ..add(const Task());
+        
+        planNotifier.value = List<Plan>.from(planNotifier.value)
+          ..[planIndex] = Plan(
+            name: currentPlan.name,
+            tasks: updatedTasks,
+          );
+        
+        setState(() {});
+      },
     );
   }
 
