@@ -1,7 +1,7 @@
 # master_plan
 
 Tugas Praktikum Master Plan
-![Dokumen Tugas Praktikum] (https://docs.google.com/document/d/1Ohq-kxFLuNWexzqOXBXBbNMU0tbHMqjWVjuvJ0vUiJg/edit?usp=sharing)
+[Dokumen Tugas Praktikum] (https://docs.google.com/document/d/1Ohq-kxFLuNWexzqOXBXBbNMU0tbHMqjWVjuvJ0vUiJg/edit?usp=sharing)
 
 Screenshot
 ![Screenshot master_plan](assets/01.png)
